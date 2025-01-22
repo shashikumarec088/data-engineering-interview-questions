@@ -327,6 +327,11 @@ examples:
 // Create RDD from a collection
 val data = Seq(1, 2, 3, 4, 5)
 val rdd = sc.parallelize(data)
+
+// From an External File
+val rdd = sc.textFile("path/to/textfile.txt")
+
+
 ```
 
 [Table of Contents](#Apache-Spark)
