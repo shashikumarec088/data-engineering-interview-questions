@@ -322,6 +322,12 @@ In case of memory tuning we have to take care of these points.
 We can create RDD in Spark in following two ways:
 + Internal: We can parallelize an existing collection of data within our Spark Driver program and create a RDD out of it.
 + External: We can also create RDD by referencing a Dataset in an external data source like AWS S3, HDFS, HBASE etc.
+examples:
+```
+// Create RDD from a collection
+val data = Seq(1, 2, 3, 4, 5)
+val rdd = sc.parallelize(data)
+```
 
 [Table of Contents](#Apache-Spark)
 
