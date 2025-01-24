@@ -97,14 +97,10 @@
 + [Explain the key features of Apache Spark.](#Explain-the-key-features-of-Apache-Spark)
 + [What are benefits of Spark over MapReduce?](#What-are-benefits-of-Spark-over-MapReduce)
 + [What is YARN?](#What-is-YARN)
-+ [Do you need to install Spark on all nodes of YARN cluster?](#Do-you-need-to-install-Spark-on-all-nodes-of-YARN-cluster)
 + [Is there any benefit of learning MapReduce if Spark is better than MapReduce?](#Is-there-any-benefit-of-learning-MapReduce-if-Spark-is-better-than-MapReduce)
 + [Explain the concept of Resilient Distributed Dataset (RDD).](#Explain-the-concept-of-Resilient-Distributed-Dataset-(RDD))
-+ [How do we create RDDs in Spark?](#How-do-we-create-RDDs-in-Spark)
 + [What is Executor Memory in a Spark application?](#What-is-Executor-Memory-in-a-Spark-application)
-+ [Define Partitions in Apache Spark.](#Define-Partitions-in-Apache-Spark)
 + [What operations does RDD support?](#What-operations-does-RDD-support)
-+ [What do you understand by Transformations in Spark?](#What-do-you-understand-by-Transformations-in-Spark)
 + [Define Actions in Spark.](#Define-Actions-in-Spark)
 + [Define functions of SparkCore.](#Define-functions-of-SparkCore)
 + [Memory management and fault recovery](#Memory-management-and-fault-recover)
@@ -156,7 +152,6 @@
 + [What are the advantages of DataFrame?](#What-are-the-advantages-of-DataFrame)
 + [What is DataSet?](#What-is-DataSet)
 + [What are the advantages of DataSets?](#What-are-the-advantages-of-DataSets)
-+ [Explain Catalyst framework.](#Explain-Catalyst-framework)
 + [What is DStream?](#What-is-DStream)
 + [Explain different transformation on DStream.](#Explain-different-transformation-on-DStream)
 + [What is written ahead log or journaling?](#What-is-written-ahead-log-or-journaling)
@@ -181,7 +176,6 @@
 + [What are the benefits of using Spark With Apache Mesos?](#What-are-the-benefits-of-using-Spark-With-Apache-Mesos)
 + [What is the Significance of Sliding Window Operation?](#What-is-the-Significance-of-Sliding-Window-Operation)
 + [When running Spark Applications is it necessary to install Spark on all Nodes of Yarn Cluster?](#When-running-Spark-Applications-is-it-necessary-to-install-Spark-on-all-Nodes-of-Yarn-Cluster)
-+ [What is Catalyst Framework?](#What-is-Catalyst-Framework)
 + [Which Spark Library allows reliable File Sharing at Memory Speed across different cluster frameworks?](#Which-Spark-Library-allows-reliable-File-Sharing-at-Memory-Speed-across-different-cluster-frameworks)
 + [Why is Blinkdb used?](#Why-is-Blinkdb-used)
 + [How can you compare Hadoop and Spark in terms of ease of use?](#How-can-you-compare-Hadoop-and-Spark-in-terms-of-ease-of-use)
@@ -192,9 +186,7 @@
 + [Explain about different Types of Transformations on Dstreams?](#Explain-about-different-Types-of-Transformations-on-Dstreams)
 + [Explain about popular use cases of Apache Spark?](#Explain-about-popular-use-cases-of-Apache-Spark)
 + [Is Apache Spark a good fit for reinforcement Learning?](#Is-Apache-Spark-a-good-fit-for-reinforcement-Learning)
-+ [What is Spark Core?](#What-is-Spark-Core)
 + [How can you remove the elements with a Key present in any other Rdd?](#How-can-you-remove-the-elements-with-a-Key-present-in-any-other-Rdd)
-+ [What is the difference between Persist and Cache?](#What-is-the-difference-between-Persist-and-Cache)
 + [How Spark handles Monitoring and Logging in Standalone Mode?](#How-Spark-handles-Monitoring-and-Logging-in-Standalone-Mode)
 + [Does Apache Spark provide check pointing?](#Does-Apache-Spark-provide-check-pointing)
 + [How can you launch Spark Jobs inside Hadoop Mapreduce?](#How-can-you-launch-Spark-Jobs-inside-Hadoop-Mapreduce)
@@ -243,6 +235,7 @@
 + [How can you trigger automatic clean-ups in Spark to handle accumulated metadata?](#How-can-you-trigger-automatic-clean-ups-in-Spark-to-handle-accumulated-metadata)
 + [Is it possible to launch Spark jobs inside Hadoop MapReduce?](#Is-it-possible-to-launch-Spark-jobs-inside-Hadoop-MapReduce)
 + [What is the use of BlinkDB in Spark?](#What-is-the-use-of-BlinkDB-in-Spark)
++ [Explain what is external shuffle service in spark?](#Explain-what-is-external-shuffle-service-in-spark?)
 
 [Table of Contents](#Apache-Spark)
 
@@ -630,8 +623,33 @@ There are primarily two types of RDD – parallelized collection and Hadoop data
 
 ## What are the methods of creating RDDs in Spark?
 There are two methods :
-+ By paralleling a collection in your Driver program.
++ By paralleling a collection in your Driver program.(we wont be able to create the rdd directly using the spark session)
 + By loading an external dataset from external storage like HDFS, HBase, shared file system.
+example:
+```
+// creating the rdd using the internal method
+val numRdd = sc.parallelize(Seq(1,2,3,4))
+
+// Create RDD from an external file
+val linesRDD = sc.textFile("data.txt")
+
+// Create a DataFrame from a collection
+val numbersDF: DataFrame = Seq(1, 2, 3, 4, 5).toDF("number")
+
+// Apply transformations and actions
+val squaredDF = numbersDF.withColumn("squared", $"number" * $"number")
+
+// Create a case class for the schema
+case class Number(number: Int)
+
+// Create a Dataset from a collection
+val numbersDS: Dataset[Number] = Seq(Number(1), Number(2), Number(3), Number(4), Number(5)).toDS()
+
+// Apply transformations and actions
+val squaredDS = numbersDS.map(num => Number(num.number * num.number))
+
+
+```
 
 [Table of Contents](#Apache-Spark)
 
@@ -654,6 +672,9 @@ Yarn is one of the key features in Spark, providing a central and resource manag
 
 ## Do you need to install Spark on all nodes of Yarn cluster? Why?
 No, because Spark runs on top of Yarn.
++ When you submit a Spark application in cluster mode or client mode, Spark uses the spark-submit script from the client machine (which has Spark installed) to package and deploy the necessary JARs and configurations to the YARN cluster.
++ The Spark runtime (JARs and dependencies) is shipped dynamically from the client machine to the worker nodes when the application starts.
++ Spark dynamically uploads its libraries and dependencies (e.g., spark-core, spark-sql, etc.) to the YARN cluster during job submission, eliminating the need for pre-installation on each node.
 
 [Table of Contents](#Apache-Spark)
 
@@ -675,10 +696,27 @@ Discretized Stream (DStream) is a sequence of Resilient Distributed Databases th
 ## What is a Catalyst framework?
 Catalyst framework is an optimization framework present in Spark SQL. It allows Spark to automatically transform SQL queries by adding new optimizations to build a faster processing system.
 
++ Catalyst is Spark's extensible query optimization framework that analyzes and optimizes DataFrame/Dataset query plans.
++ During query optimization, Catalyst constructs a logical plan representing the user's DataFrame/Dataset operations (e.g., select, filter, join).
++ Catalyst then applies various optimization rules and transformations to the logical plan to generate an optimized logical plan.
++ The optimized logical plan is translated into a physical plan, which defines how the DataFrame/Dataset operations are executed on the underlying data.
++ Some of the optimizations are predicate or projection pushdown, rearrange filter, conversion of decimals operations to long integer operations
+replacement of some RegEx expressions by Java’s methods, if-else clauses simplification
++ Code generation is applied to certain operations in the physical plan to generate Java bytecode for more efficient execution.
++ Catalyst optimizer working with [example](https://medium.com/@Shkha_24/catalyst-optimizer-the-power-of-spark-sql-cad8af46097f)
+
+
 [Table of Contents](#Apache-Spark)
 
 ## What are Actions in Spark?
 An action helps in bringing back the data from RDD to the local machine. An action’s execution is the result of all previously created transformations.
+some of the actions are
+show(): Displays the first few rows of the DataFrame in tabular form.
+collect(): Retrieves all rows of the DataFrame as an array.
+count(): Returns the number of rows in the DataFrame.
+take(n): Returns the first n rows of the DataFrame as an array.
+foreach(): Applies a function to each row of the DataFrame.
+
 
 [Table of Contents](#Apache-Spark)
 
@@ -693,7 +731,7 @@ Spark uses GraphX for graph processing to build and transform interactive graphs
 [Table of Contents](#Apache-Spark)
 
 ## What file systems does Spark support?
-Hadoop distributed file system (HDFS), local file system, and Amazon S3.
+Hadoop distributed file system (HDFS), local file system, and Amazon S3 and other cloud provider blob storages.
 
 [Table of Contents](#Apache-Spark)
 
@@ -709,8 +747,16 @@ Persist () allows the user to specify the storage level whereas cache () uses th
 [Table of Contents](#Apache-Spark)
 
 ## What do you understand by SchemaRDD?
-SchemaRDD is an RDD that consists of row objects (wrappers around the basic string or integer arrays) with schema information about the type of data in each column.
-These are some popular questions asked in an Apache Spark interview. Always be prepared to answer all types of questions — technical skills, interpersonal, leadership or methodology. If you are someone who has recently started your career in big data, you can always get certified in Apache Spark to get the techniques and skills required to be an expert in the field.
+A Schema RDD is an early concept in Apache Spark (prior to version 1.3) that introduced a way to work with structured data using a schema. It was essentially an RDD with a schema attached, which allowed users to perform SQL-like operations on structured data.
+
+Starting from Spark 1.3, the concept of Schema RDD was replaced by the DataFrame API. A DataFrame is conceptually similar to a Schema RDD but provides a more powerful and user-friendly API.
+
+creating schema rdd from normal rdd
+```
+val rowRDD = numRdd.map(line => Row(line))
+val schema = StructType(List(StructField("number", IntegerType, nullable = true)))
+val schemaRDD = spark.sqlContext.applySchema(rowRDD, schema)
+```
 
 [Table of Contents](#Apache-Spark)
 
@@ -746,6 +792,14 @@ As the name suggests, partition is a smaller and logical division of data  simil
 
 ## What do you understand by Transformations in Spark?
 Transformations are functions applied on RDD, resulting into another RDD. It does not execute until an action occurs. map() and filer() are examples of transformations, where the former applies the function passed to it on each element of RDD and results into another RDD. The filter() creates a new RDD by selecting elements form current RDD that pass function argument.
+
+some common transformations
+select(): Selects specific columns from the DataFrame.
+filter(): Filters rows based on a given condition.
+groupBy(): Groups the DataFrame using specified columns.
+orderBy(): Sorts the DataFrame based on specific columns.
+withColumn(): Adds a new column or replaces an existing column with a transformed value.
+join(): Performs a join operation with another DataFrame based on a specified column.
 
 [Table of Contents](#Apache-Spark)
 
@@ -853,6 +907,7 @@ Benefits of user defined schemas include:
 -   Avoiding the extra scan of your data needed to infer the schema
 -   Providing alternative data types
 -   Parsing only the fields you need
+-   avoiding schema issues that spark might infer wrongly when all values are null on the sampled files
 
 [Table of Contents](#Apache-Spark)
 
@@ -891,10 +946,6 @@ Similar to Hadoop, YARN is one of the key features in Spark, providing a central
 
 [Table of Contents](#Apache-Spark)
 
-## Do you need to install Spark on all nodes of YARN cluster?
-No, because Spark runs on top of YARN. Spark runs independently from its installation. Spark has some options to use YARN when dispatching jobs to the cluster, rather than its own built-in manager, or Mesos. Further, there are some configurations to run YARN. They include master, deploy-mode, driver-memory, executor-memory, executor-cores, and queue.
-
-[Table of Contents](#Apache-Spark)
 
 ## Is there any benefit of learning MapReduce if Spark is better than MapReduce?
 Yes, MapReduce is a paradigm used by many big data tools including Spark as well. It is extremely relevant to use MapReduce when the data grows bigger and bigger. Most tools like Pig and Hive convert their queries into MapReduce phases to optimize them better.
@@ -909,21 +960,8 @@ RDD stands for Resilient Distribution Datasets. An RDD is a fault-tolerant colle
 
 [Table of Contents](#Apache-Spark)
 
-## How do we create RDDs in Spark?
-Spark provides two methods to create RDD:
-1. By parallelizing a collection in your Driver program.
-2. This makes use of SparkContext’s parallelize
-3. By loading an external dataset from external storage like HDFS, HBase, shared file system.
-
-[Table of Contents](#Apache-Spark)
-
 ## What is Executor Memory in a Spark application?
 Every spark application has same fixed heap size and fixed number of cores for a spark executor. The heap size is what referred to as the Spark executor memory which is controlled with the spark.executor.memory property of the –executor-memory flag. Every spark application will have one executor on each worker node. The executor memory is basically a measure on how much memory of the worker node will the application utilize.
-
-[Table of Contents](#Apache-Spark)
-
-## Define Partitions in Apache Spark.
-As the name suggests, partition is a smaller and logical division of data similar to split in MapReduce. It is a logical chunk of a large distributed data set. Partitioning is the process to derive logical units of data to speed up the processing process. Spark manages data using partitions that help parallelize distributed data processing with minimal network traffic for sending data between executors. By default, Spark tries to read data into an RDD from the nodes that are close to it. Since Spark usually accesses distributed partitioned data, to optimize transformation operations it creates partitions to hold the data chunks. Everything in Spark is a partitioned RDD.
 
 [Table of Contents](#Apache-Spark)
 
@@ -932,14 +970,6 @@ RDD (Resilient Distributed Dataset) is main logical data unit in Spark. An RDD h
 RDDs support two types of operations: transformations and actions.
 Transformations: Transformations create new RDD from existing RDD like map, reduceByKey and filter we just saw. Transformations are executed on demand. That means they are computed lazily.
 Actions: Actions return final results of RDD computations. Actions triggers execution using lineage graph to load the data into original RDD, carry out all intermediate transformations and return final results to Driver program or write it out to file system.
-
-[Table of Contents](#Apache-Spark)
-
-## What do you understand by Transformations in Spark?
-Transformations are functions applied on RDD, resulting into another RDD. It does not execute until an action occurs. map() and filter() are examples of transformations, where the former applies the function passed to it on each element of RDD and results into another RDD. The filter() creates a new RDD by selecting elements from current RDD that pass function argument.
-val rawData=sc.textFile("path to/movies.txt")
-val moviesData=rawData.map(x=>x.split("  "))
-As we can see here, rawData RDD is transformed into moviesData RDD. Transformations are lazily evaluated.
 
 [Table of Contents](#Apache-Spark)
 
@@ -1404,15 +1434,6 @@ Dataset API decreases the use of memory. As Spark knows the structure of data in
 
 [Table of Contents](#Apache-Spark)
 
-## Explain Catalyst framework.
-The Catalyst is a framework which represents and manipulate a DataFrame graph. Data flow graph is a tree of relational operator and expressions. The three main features of catalyst are:
-It has a TreeNode library for transforming tree. They are expressed as Scala case classes.
-A logical plan representation for relational operator.
-Expression library.
-The TreeNode builds a query optimizer. It contains a number of the query optimizer. Catalyst Optimizer supports both rule-based and cost-based optimization. In rule-based optimization the optimizer use set of rule to determine how to execute the query. While the cost based optimization finds the most suitable way to carry out SQL statement. In cost-based optimization, many plans are generates using rules. And after this, it computes their cost. Catalyst optimizer makes use of standard features of Scala programming like pattern matching.
-
-[Table of Contents](#Apache-Spark)
-
 ## What is DStream?
 DStream is the high-level abstraction provided by Spark Streaming. It represents a continuous stream of data. Thus, DStream is internally a sequence of RDDs. There are two ways to create DStream:
 by using data from different sources such as Kafka, Flume, and Kinesis.
@@ -1513,12 +1534,24 @@ As Dataset introduced after RDD and DataFrame, it clubs the features of both. It
    Hence, we have observed that Datasets provides a more functional programming interface to work with structured data.
    To know more detailed information about DataSets, refer link: Spark Dataset
 
+
 [Table of Contents](#Apache-Spark)
 
 ## On what all basis can you differentiate RDD and DataFrame and DataSet?
 DataFrame: A Data Frame is used for storing data into tables. It is equivalent to a table in a relational database but with richer optimization. Spark DataFrame is a data abstraction and domain-specific language (DSL) applicable on a structure and semi-structured data. It is distributed the collection of data in the form of named column and row. It has a matrix-like structure whose column may be different types (numeric, logical, factor, or character ). We can say data frame has the two-dimensional array like structure where each column contains the value of one variable and row contains one set of values for each column and combines feature of list and matrices
 RDD is the representation of a set of records, immutable collection of objects with distributed computing. RDD is a large collection of data or RDD is an array of reference of partitioned objects. Each and every dataset in RDD is logically partitioned across many servers so that they can compute on different nodes of the cluster. RDDs are fault tolerant i.e. self-recovered/recomputed in the case of failure. The dataset can load externally by the users which can be in the form of JSON file, CSV file, text file or database via JDBC with no specific data structure.
 DataSet in Apache Spark, Datasets are an extension of DataFrame API. It offers object-oriented programming interface. Through Spark SQL, it takes advantage of Spark’s Catalyst optimizer by exposing e data fields to a query planner.
+
+| Feature                       | Dataset                                  | DataFrame                                  | RDD                                      |
+|-------------------------------|------------------------------------------|-------------------------------------------|------------------------------------------|
+| **Type Safety**               | Strongly typed at compile time.          | Untyped, runtime schema checking.         | Strongly typed, but lacks schema awareness. |
+| **Ease of Use**               | Provides type-safe API and SQL-like queries. | High-level API for SQL-like operations.   | Requires more code for structured data processing. |
+| **Performance**               | Optimized with Catalyst and Tungsten.    | Optimized with Catalyst and Tungsten.     | Not optimized for query execution.       |
+| **API Richness**              | Supports both functional and SQL APIs.   | Primarily SQL-like API.                   | Functional API, no SQL support.          |
+| **Memory Usage**              | Efficient due to serialization optimizations. | Efficient due to serialization optimizations. | Can have high overhead due to object serialization. |
+| **Interoperability**          | Convertible to/from DataFrames and RDDs. | Convertible to/from Datasets and RDDs.    | Can be converted to DataFrames and Datasets. |
+| **Schema Awareness**          | Schema-aware with compile-time checks.   | Schema-aware but no compile-time checks.  | No schema awareness.                     |
+
 
 [Table of Contents](#Apache-Spark)
 
@@ -1540,6 +1573,21 @@ To overcome this data loss scenario, Write Ahead Logging (WAL) has been introduc
 WAL can enable by performing the below:
 1. Setting the checkpoint directory, by using streamingContext.checkpoint(path)
 2. Enabling the WAL logging, by setting spark.stream.receiver.WriteAheadLog.enable to True.
+
+[Table of Contents](#Apache-Spark)
+
+## Explain what is external shuffle service in spark?
+- **Purpose**: The External Shuffle Service (ESS) is a separate daemon running on Spark worker nodes that manages and serves intermediate shuffle data, ensuring fault tolerance during shuffle operations.
+
+- **Fault Tolerance**: ESS persists shuffle data even after executor failures, allowing Spark to retrieve the data from the service instead of recomputing it, reducing computation overhead.
+
+- **Independent Service**: The shuffle service operates independently of the executors, handling shuffle file management and freeing up executors to focus on computations.
+
+- **Improved Scalability**: By offloading shuffle file management to the service, Spark can scale more effectively and handle large-scale shuffle operations with multiple concurrent data requests.
+
+- **Configuration**: ESS can be enabled with `spark.shuffle.service.enabled=true` and configured with options like shuffle port (`spark.shuffle.service.port`) and file expiration time (`spark.shuffle.service.fileExpirationTime`).
+
+- **Limitations**: ESS introduces overhead due to network and disk I/O for transferring shuffle data and may require careful configuration of disk space and memory usage to avoid performance degradation.
 
 [Table of Contents](#Apache-Spark)
 
@@ -1616,11 +1664,6 @@ Spark need not be installed when running a job under YARN or Mesos because Spark
 
 [Table of Contents](#Apache-Spark)
 
-## What is Catalyst Framework?
-Catalyst framework is a new optimization framework present in Spark SQL. It allows Spark to automatically transform SQL queries by adding new optimizations to build a faster processing system.
-
-[Table of Contents](#Apache-Spark)
-
 ## Which Spark Library allows reliable File Sharing at Memory Speed across different cluster frameworks?
 Tachyon
 
@@ -1687,18 +1730,8 @@ No. Apache Spark works well only for simple machine learning algorithms like clu
 
 [Table of Contents](#Apache-Spark)
 
-## What is Spark Core?
-It has all the basic functionalities of Spark, like - memory management, fault recovery, interacting with storage systems, scheduling tasks, etc.
-
-[Table of Contents](#Apache-Spark)
-
 ## How can you remove the elements with a Key present in any other Rdd?
 Use the subtractByKey () function.
-
-[Table of Contents](#Apache-Spark)
-
-## What is the difference between Persist and Cache?
-persist () allows the user to specify the storage level where as cache () uses the default storage level.
 
 [Table of Contents](#Apache-Spark)
 
